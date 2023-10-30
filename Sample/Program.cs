@@ -18,6 +18,10 @@ class Program
         var host = CreateHostBuilder(args).Build();
 
         host.Start();
+
+        Console.WriteLine("Press a key when all subscription messages have arrived!");
+        Console.ReadKey();
+
         using (var childScope = host.Services.CreateScope())
         {
             var session = childScope.ServiceProvider.GetService<ITransactionalSession>();
