@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,17 +12,13 @@ using Shared;
 class Program
 {
     const string ConnectionString =
-        $@"Data Source=.\SqlExpress;Initial Catalog=nservicebus;Integrated Security=True;Encrypt=false";
+        $@"Data Source=localhost;Initial Catalog=nservicebus;Integrated Security=True;Encrypt=false";
 
     static async Task Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
 
         host.Start();
-
-        Console.WriteLine("Press a key when all subscription messages have arrived!");
-        Console.ReadKey();
-
         using (var childScope = host.Services.CreateScope())
         {
             var session = childScope.ServiceProvider.GetService<ITransactionalSession>();
@@ -47,21 +44,19 @@ class Program
     {
         return Host.CreateDefaultBuilder(args)
             .UseConsoleLifetime()
-            .ConfigureLogging(logging =>
-            {
-                logging.AddConsole();
-            })
+            .ConfigureLogging(logging => { logging.AddConsole(); })
             .UseNServiceBus(ctx =>
             {
                 Console.Title = "Publisher";
 
-                #region ConfigureMsmqEndpoint
 
                 var endpointConfiguration = new EndpointConfiguration("Publisher");
-                var transport = endpointConfiguration.UseTransport(new MsmqTransport());
+                var transport = endpointConfiguration.SetupTransportReceiveOnly(1, ConnectionString);
+
                 // endpointConfiguration.SendOnly();
 
                 transport.RegisterPublisher(typeof(MyMessage), "Publisher");
+                endpointConfiguration.EnableOutbox();
 
 
                 var persistence = endpointConfiguration.UsePersistence<SqlPersistence>();
@@ -74,14 +69,12 @@ class Program
                 subscriptions.DisableCache();
 
 
-                #endregion
-
                 endpointConfiguration.SendFailedMessagesTo("error");
+
                 endpointConfiguration.EnableInstallers();
                 endpointConfiguration.Recoverability().Delayed(d => d.NumberOfRetries(0));
 
                 return endpointConfiguration;
             });
-
     }
 }
