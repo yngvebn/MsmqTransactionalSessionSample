@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NServiceBus;
 using NServiceBus.TransactionalSession;
+using Shared;
 
 class Program
 {
@@ -25,6 +26,9 @@ class Program
 
             var myMessage = new MyMessage();
             await session.Publish(myMessage).ConfigureAwait(false);
+
+            var myOtherMessage = new MyOtherMessage();
+            await session.Publish(myOtherMessage).ConfigureAwait(false);
 
             await session.Commit().ConfigureAwait(false);
         }

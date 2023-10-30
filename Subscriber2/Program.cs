@@ -12,7 +12,7 @@ namespace Subscriber2
             var transport = config.UseTransport(new MsmqTransport());
             transport.DisablePublishing();
 
-            transport.RegisterPublisher(typeof(MyMessage), "Publisher");
+            transport.RegisterPublisher(typeof(MyMessage).Assembly, "Publisher");
 
             config.SendFailedMessagesTo("error");
             config.EnableInstallers();
